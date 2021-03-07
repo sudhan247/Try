@@ -16,13 +16,7 @@ def pil_image_to_base64(pil_image):
 def base64_to_pil_image(base64_img):
     return Image.open(BytesIO(base64.b64decode(base64_img)))
 
-def initialise():
-    #Kill old thread
-    command = 'netstat -aon | find /i "listening" |find "5000"'
-    c = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
-    stdout, stderr = c.communicate();
-    stdout = stdout.decode().strip().split()
-    if "LISTENING" in stdout:   os.kill(int(stdout[-1]), signal.SIGTERM)
+def ready_store():
     #Local storage to save
     current_directory = os.getcwd()
     final_directory = os.path.join(current_directory, r'garbage')
@@ -32,6 +26,15 @@ def initialise():
     else:
         shutil.rmtree(final_directory)
         os.makedirs(final_directory)
+
+def initialise():
+    #Kill old thread
+    command = 'netstat -aon | find /i "listening" |find "5000"'
+    c = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = c.communicate();
+    stdout = stdout.decode().strip().split()
+    if "LISTENING" in stdout:   os.kill(int(stdout[-1]), signal.SIGTERM)
+    ready_store()
 class Camera(object):
     def __init__(self, makeup_artist):
         self.to_process = []
@@ -66,10 +69,11 @@ class Makeup_artist(object):
         return img.transpose(Image.FLIP_TOP_BOTTOM)
 
 app = Flask(__name__)
-app.logger.addHandler(logging.StreamHandler(stdout))
+app.logger.disabled = True
 app.config['SECRET_KEY'] = 'secret!'
 app.config['DEBUG'] = True
 socketio = SocketIO(app)
+
 camera = Camera(Makeup_artist())
 
 @socketio.on('input image', namespace='/test')
@@ -89,11 +93,13 @@ def test_connect():
 
 @app.route('/')
 def index():
+    global_dict["pic_num"] = 0
+    ready_store()
     return render_template('index.html')
 
 if __name__ == '__main__':
     initialise()
-    socketio.run(app,use_reloader=False)
+    socketio.run(app,use_reloader=False,log_output=False)
     
 
  
