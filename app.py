@@ -93,6 +93,7 @@ def test_connect():
 
 @app.route('/')
 def index():
+    print("New Connection")
     global_dict["pic_num"] = 0
     ready_store()
     return render_template('index.html')
