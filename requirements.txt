@@ -1,0 +1,8 @@
+eventlet==0.20.0
+Flask-SocketIO==2.9.1
+
+gevent-websocket==0.10.1
+python-engineio==1.7.0
+
+python-socketio==1.7.7
+
