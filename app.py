@@ -2,7 +2,7 @@ from sys import stdout
 from flask import Flask, render_template, Response
 from flask_socketio import SocketIO, emit
 from PIL import Image
-import threading, binascii, base64, logging, os,shutil
+import threading, binascii, base64, logging, os, shutil, subprocess,signal 
 from time import sleep
 from io import BytesIO
 
@@ -16,7 +16,14 @@ def pil_image_to_base64(pil_image):
 def base64_to_pil_image(base64_img):
     return Image.open(BytesIO(base64.b64decode(base64_img)))
 
-def create_storage():
+def initialise():
+    #Kill old thread
+    command = 'netstat -aon | find /i "listening" |find "5000"'
+    c = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    stdout, stderr = c.communicate();
+    stdout = stdout.decode().strip().split()
+    if "LISTENING" in stdout:   os.kill(int(stdout[-1]), signal.SIGTERM)
+    #Local storage to save
     current_directory = os.getcwd()
     final_directory = os.path.join(current_directory, r'garbage')
     global_dict["folder"] = final_directory
@@ -85,6 +92,8 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    create_storage()
+    initialise()
     socketio.run(app,use_reloader=False)
+    
+
  
